@@ -44,17 +44,17 @@ class BasicMonitor(QtWidgets.QTableWidget):
         self.saveData = False
 
         # 默认不允许根据表头进行排序，需要的组件可以开启
-        self.sorting = False
+        self.sorting = True
 
     def initTable(self):
         """初始化表格"""
         # 设置表格的列数
         #col = len(self.headerDict)
         #self.setColumnCount(col)
-        self.setColumnCount(4)
+        self.setColumnCount(5)
 
         # 设置列表头
-        labels = ["名", "格", "幅", "code"]
+        labels = ["公司","价格", "涨幅", "代码", "未定义"]
         self.setHorizontalHeaderLabels(labels)
 
         # 关闭左边的垂直表头
@@ -134,16 +134,16 @@ class MarketMonitor(BasicMonitor):
             data[code]['amount'] = zf
             # print(StockValues)
             i = i + 1
-        #list1 =sorted(data.items(), key=lambda x: x[0][1], reverse=True)
-        list = list(data)
-        print(list)
-        # j = 0
-        # for show in list:
-        #     self.setItem(j, 0, QTableWidgetItem(list[show]['name']))
-        #     self.setItem(j, 1, QTableWidgetItem(str(list[show]['now'])))
-        #     res = format(list[show]['amount'],".2%")
-        #     self.setItem(j, 2, QTableWidgetItem(str(res)))
-        #     self.setItem(j, 3, QTableWidgetItem(show))
-        #     j=j+1
-        #
-        #
+        list = OrderedDict(sorted(data.items(), key=lambda i: i[1]['amount'],reverse=1))
+        # list = data
+        j = 0
+        for show in list:
+            self.setItem(j, 0, QTableWidgetItem(list[show]['name']))
+            self.setItem(j, 1, QTableWidgetItem(str(list[show]['now'])))
+            res = format(list[show]['amount'],".2%")
+            self.setItem(j, 2, QTableWidgetItem(str(res)))
+            self.setItem(j, 3, QTableWidgetItem(show))
+            j=j+1
+
+
+
