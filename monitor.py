@@ -16,36 +16,15 @@ class MyQQ(QTabWidget):
 
 
         tab1 = MarketMonitor(eventEngine)
-        #tab1.setColumnCount(3)
-        #tab1.horizontalHeader().setDefaultSectionSize(50)
-        #tab1.horizontalHeader().setStretchLastSection(True)
-        #tab1.setHorizontalHeaderLabels(header)
-
-        toolButton2 = QToolButton()
-        toolButton2.setText(self.tr("条件设置"))
-        toolButton2.setIcon(QIcon("d:/image/2.png"))
-        toolButton2.setIconSize(QSize(60, 60))
-        toolButton2.setAutoRaise(True)
-        toolButton2.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-
-        toolButton3 = QToolButton()
-        toolButton3.setText(self.tr("为什么"))
-        toolButton3.setIcon(QIcon("d:/image/3.png"))
-        toolButton3.setIconSize(QSize(60, 60))
-        toolButton3.setAutoRaise(True)
-        toolButton3.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-
         groupbox1 = QGroupBox()
         vlayout1 = QVBoxLayout(groupbox1)
         vlayout1.setAlignment(Qt.AlignCenter)
         vlayout1.addWidget(tab1)
-        vlayout1.addWidget(toolButton2)
-        vlayout1.addStretch()
+       # vlayout1.addStretch()
 
         groupbox2 = QGroupBox()
         vlayout2 = QVBoxLayout(groupbox2)
         vlayout2.setAlignment(Qt.AlignCenter)
-        vlayout2.addWidget(toolButton3)
         vlayout2.addStretch()
 
         groupbox3 = QGroupBox()

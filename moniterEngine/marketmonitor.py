@@ -4,7 +4,7 @@ from  PyQt5.QtWidgets import QTableWidgetItem
 from .vtEvent import *
 from collections import OrderedDict
 from .eventEngine import  *
-
+from PyQt5.Qt import *
 class BasicMonitor(QtWidgets.QTableWidget):
     """
     基础监控
@@ -71,6 +71,19 @@ class BasicMonitor(QtWidgets.QTableWidget):
 
         self.setRowCount(4728)
 
+        self.horizontalHeader().setStretchLastSection(True)
+
+
+        self.setColumnWidth(0,60)
+        self.setColumnWidth(1,50)
+        self.setColumnWidth(2,60)
+        self.setColumnWidth(3,70)
+
+        for index in range(self.columnCount()):
+            headItem = self.horizontalHeaderItem(index)
+            headItem.setForeground(QBrush(Qt.gray))
+            headItem.setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+
 
 class MarketMonitor(BasicMonitor):
     """市场监控组件"""
@@ -132,10 +145,8 @@ class MarketMonitor(BasicMonitor):
             else:
                 zf = 0
             data[code]['amount'] = zf
-            # print(StockValues)
             i = i + 1
         list = OrderedDict(sorted(data.items(), key=lambda i: i[1]['amount'],reverse=1))
-        # list = data
         j = 0
         for show in list:
             self.setItem(j, 0, QTableWidgetItem(list[show]['name']))

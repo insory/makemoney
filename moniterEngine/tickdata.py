@@ -26,7 +26,7 @@ class MarketDataThread(QThread):
         while self.__active == True:
             try:
                 self.processQuote()
-                self.sleep(1)
+                self.sleep(3)
             except Empty:
                 pass
 
