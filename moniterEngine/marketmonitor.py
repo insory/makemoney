@@ -44,7 +44,39 @@ class BasicMonitor(QtWidgets.QTableWidget):
         self.saveData = False
 
         # 默认不允许根据表头进行排序，需要的组件可以开启
-        self.sorting = True
+        self.sorting = False
+    # ----------------------------------------------------------------------
+    def setEventType(self, eventType):
+            """设置监控的事件类型"""
+            self.eventType = eventType
+
+    def registerEvent(self):
+            """注册GUI更新相关的事件监听"""
+            self.signal.connect(self.updateEvent)
+            self.eventEngine.register(self.eventType, self.signal.emit)
+
+        # ----------------------------------------------------------------------
+    def updateEvent(self, event):
+            """收到事件更新"""
+            data = event.dict_['data']
+            self.updateData(data)
+
+
+class MarketMonitor(BasicMonitor):
+    """市场监控组件"""
+    # ----------------------------------------------------------------------
+    def __init__(self, eventEngine, parent=None):
+        """Constructor"""
+        super().__init__(self, eventEngine, parent=None)
+
+        # 设置监控事件类型
+        self.setEventType(EVENT_TICK)
+
+        # 注册事件监听
+        self.registerEvent()
+
+        self.initTable()
+
 
     def initTable(self):
         """初始化表格"""
@@ -72,20 +104,30 @@ class BasicMonitor(QtWidgets.QTableWidget):
         self.setRowCount(4728)
 
         self.horizontalHeader().setStretchLastSection(True)
-
-
         self.setColumnWidth(0,60)
         self.setColumnWidth(1,50)
         self.setColumnWidth(2,60)
         self.setColumnWidth(3,70)
-
         for index in range(self.columnCount()):
             headItem = self.horizontalHeaderItem(index)
             headItem.setForeground(QBrush(Qt.gray))
             headItem.setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
 
 
-class MarketMonitor(BasicMonitor):
+    # ----------------------------------------------------------------------
+    def updateData(self, data):
+        """将数据更新到表格中"""
+        j = 0
+        for show in data:
+            if(data[show]["valid"] == True):
+                self.setItem(j, 0, QTableWidgetItem(data[show]['name']))
+                self.setItem(j, 1, QTableWidgetItem(str(data[show]['now'])))
+                res = format(data[show]['amount'],".2%")
+                self.setItem(j, 2, QTableWidgetItem(str(res)))
+                self.setItem(j, 3, QTableWidgetItem(show))
+                j=j+1
+
+class CustomMonitor(BasicMonitor):
     """市场监控组件"""
 
     # ----------------------------------------------------------------------
@@ -101,60 +143,107 @@ class MarketMonitor(BasicMonitor):
 
         self.initTable()
 
+    def initTable(self):
+        """初始化表格"""
+        # 设置表格的列数
+        self.setColumnCount(5)
 
-    # ----------------------------------------------------------------------
-    def setEventType(self, eventType):
-        """设置监控的事件类型"""
-        self.eventType = eventType
+        # 设置列表头
+        labels = ["公司","价格", "涨幅", "代码", "自定义"]
+        self.setHorizontalHeaderLabels(labels)
 
-    def registerEvent(self):
-        """注册GUI更新相关的事件监听"""
-        self.signal.connect(self.updateEvent)
-        self.eventEngine.register(self.eventType, self.signal.emit)
+        # 关闭左边的垂直表头
+        self.verticalHeader().setVisible(False)
 
+        # 设为不可编辑
+        self.setEditTriggers(self.NoEditTriggers)
 
-    # ----------------------------------------------------------------------
-    def updateEvent(self, event):
-        """收到事件更新"""
-        data = event.dict_['data']
-        self.updateData(data)
+        # 设为行交替颜色
+        self.setAlternatingRowColors(True)
 
-    def dict_get(self,dictionary, cmd, default=None):
-        cmd_list = cmd.split('.')
-        tmp = dict(dictionary)
-        for c in cmd_list:
-            try:
-                val = tmp.get(c, None)
-            except AttributeError:
-                return default
-            if val != None:
-                tmp = val
-            else:
-                return default
-        return tmp
-    # ----------------------------------------------------------------------
+        # 设置允许排序
+        self.setSortingEnabled(self.sorting)
+
+        self.setRowCount(4728)
+
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setColumnWidth(0,60)
+        self.setColumnWidth(1,50)
+        self.setColumnWidth(2,60)
+        self.setColumnWidth(3,70)
+        for index in range(self.columnCount()):
+            headItem = self.horizontalHeaderItem(index)
+            headItem.setForeground(QBrush(Qt.gray))
+            headItem.setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+
     def updateData(self, data):
-        """将数据更新到表格中"""
-        StockValues = OrderedDict()
-        i = 0
-        for code in data:
-            open = self.dict_get(data[code],'close')
-            now = self.dict_get(data[code],'now')
-            if open != 0:
-                zf = (now-open)/open
-            else:
-                zf = 0
-            data[code]['amount'] = zf
-            i = i + 1
-        list = OrderedDict(sorted(data.items(), key=lambda i: i[1]['amount'],reverse=1))
         j = 0
-        for show in list:
-            self.setItem(j, 0, QTableWidgetItem(list[show]['name']))
-            self.setItem(j, 1, QTableWidgetItem(str(list[show]['now'])))
-            res = format(list[show]['amount'],".2%")
-            self.setItem(j, 2, QTableWidgetItem(str(res)))
-            self.setItem(j, 3, QTableWidgetItem(show))
-            j=j+1
+        for show in data:
+            if (data[show]["planCust"] == True):
+                self.setItem(j, 0, QTableWidgetItem(data[show]['name']))
+                self.setItem(j, 1, QTableWidgetItem(str(data[show]['now'])))
+                res = format(data[show]['amount'], ".2%")
+                self.setItem(j, 2, QTableWidgetItem(str(res)))
+                self.setItem(j, 3, QTableWidgetItem(show))
+                j = j + 1
 
 
+class PlanAMonitor(BasicMonitor):
+    """市场监控组件"""
 
+    # ----------------------------------------------------------------------
+    def __init__(self, eventEngine, parent=None):
+        """Constructor"""
+        super().__init__(self, eventEngine, parent=None)
+
+        # 设置监控事件类型
+        self.setEventType(EVENT_TICK)
+
+        # 注册事件监听
+        self.registerEvent()
+
+        self.initTable()
+
+    def initTable(self):
+        """初始化表格"""
+        # 设置表格的列数
+        self.setColumnCount(5)
+
+        # 设置列表头
+        labels = ["公司","价格", "涨幅", "代码", "自定义"]
+        self.setHorizontalHeaderLabels(labels)
+
+        # 关闭左边的垂直表头
+        self.verticalHeader().setVisible(False)
+
+        # 设为不可编辑
+        self.setEditTriggers(self.NoEditTriggers)
+
+        # 设为行交替颜色
+        self.setAlternatingRowColors(True)
+
+        # 设置允许排序
+        self.setSortingEnabled(self.sorting)
+
+        self.setRowCount(4728)
+
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setColumnWidth(0,60)
+        self.setColumnWidth(1,50)
+        self.setColumnWidth(2,60)
+        self.setColumnWidth(3,70)
+        for index in range(self.columnCount()):
+            headItem = self.horizontalHeaderItem(index)
+            headItem.setForeground(QBrush(Qt.gray))
+            headItem.setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+
+    def updateData(self, data):
+        j = 0
+        for show in data:
+            if (data[show]["planA"] == True):
+                self.setItem(j, 0, QTableWidgetItem(data[show]['name']))
+                self.setItem(j, 1, QTableWidgetItem(str(data[show]['now'])))
+                res = format(data[show]['amount'], ".2%")
+                self.setItem(j, 2, QTableWidgetItem(str(res)))
+                self.setItem(j, 3, QTableWidgetItem(show))
+                j = j + 1
