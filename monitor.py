@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+import sys
+import easyquotation
 from PyQt5.QtGui import *
-from PyQt5.Qt import *
-from qtpy import *
-
 
 from moniterEngine.marketmonitor import *
+from moniterEngine.stocksearch import *
 from moniterEngine.tickdata import *
-import sys
 
 QTextCodec.setCodecForLocale(QTextCodec.codecForName("utf8"))
 
@@ -14,18 +13,18 @@ QTextCodec.setCodecForLocale(QTextCodec.codecForName("utf8"))
 class MyQQ(QTabWidget):
     def __init__(self,eventEngine, parent=None):
         super(MyQQ, self).__init__(parent)
-
         palette1 = QPalette()
-        palette1.setColor(self.backgroundRole(), QColor(128, 128, 128))  # 设置背景颜色
-         # palette1.setBrush(self.backgroundRole(), QtGui.QBrush(QtGui.QPixmap('../../../Document/images/17_big.jpg')))   # 设置背景图片
         self.frame = 1
         self.setPalette(palette1)
+
         tab1 = MarketMonitor(eventEngine)
-        tab1.setPalette(palette1)
+
         groupbox1 = QGroupBox()
         groupbox1.setPalette(palette1)
         vlayout1 = QVBoxLayout(groupbox1)
         vlayout1.setAlignment(Qt.AlignCenter)
+        mainMonitor = QLabel("s：-0.88% c：1.22%")
+        vlayout1.addWidget(mainMonitor)
         vlayout1.addWidget(tab1)
 
         tab2 = CustomMonitor(eventEngine)
@@ -40,23 +39,52 @@ class MyQQ(QTabWidget):
         tab3.setPalette(palette1)
         groupbox3 = QGroupBox()
         groupbox3.setPalette(palette1)
+        stocksearch1 = stocksearch()
         vlayout3 = QVBoxLayout(groupbox3)
         vlayout3.setAlignment(Qt.AlignCenter)
+        vlayout3.addWidget(stocksearch1)
         vlayout3.addWidget(tab3)
 
         toolbox1 = QToolBox()
         toolbox1.setPalette(palette1)
         toolbox1.setAutoFillBackground(True)
+
         toolbox1.addItem(groupbox1, self.tr("我的自选"))
         toolbox1.addItem(groupbox2, self.tr("近期强势股"))
         toolbox1.addItem(groupbox3, self.tr("我的交易计划"))
 
+
         toolbox2 = QToolBox()
         toolbox2.setPalette(palette1)
         toolbox2.setAutoFillBackground(True)
+
+
         self.addTab(toolbox1, "主面板")
         self.addTab(toolbox2, "监控")
         self.setAutoFillBackground(True)
+
+        # toolbox1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(80, 80, 80);border-radius: 10px")
+        # toolbox2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+        #
+        # tab1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+        # tab2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+
+
+
+        self.setGeometry(300, 300, 200, 500)
+
+        # custList1 = storeRecord("cust1")
+        # ls = ["000001"]
+        # custList1.dataSave(ls)
+        # ls.append("600222")
+        # custList1.dataSave(ls)
+        # ls.append("300222")
+        # custList1.dataSave(ls)
+
+        # list=custList1.dataLoad()
+
+        print(list)
+
     def buttonClicked(self,toolbox1):
         groupboxNew = QGroupBox()
         toolboxNew = QToolBox()
@@ -77,12 +105,16 @@ class MyQQ(QTabWidget):
         elif(self.y() < 0 and QCursor.pos().y()>0):
             self.move(self.x(), self.frame-self.height()+self.y()-self.geometry().y())
 
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.show()
+
 # 直接运行脚本可以进行测试
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    easyquotation.update_stock_codes();
     ee = EventEngine()
     myqq = MyQQ(ee)
-    myqq.setWindowFlags(myqq.windowFlags()& ~Qt.WindowMinMaxButtonsHint)
+    myqq.setWindowFlags(myqq.windowFlags()& (~Qt.WindowMinMaxButtonsHint|Qt.FramelessWindowHint))
     myqq.setWindowTitle("自动量化交易")
 
     ss = MarketMonitor(ee)

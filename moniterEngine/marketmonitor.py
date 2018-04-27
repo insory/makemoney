@@ -96,7 +96,7 @@ class MarketMonitor(BasicMonitor):
         self.setEditTriggers(self.NoEditTriggers)
 
         # 设为行交替颜色
-        self.setAlternatingRowColors(True)
+        # self.setAlternatingRowColors(True)
 
         # 设置允许排序
         self.setSortingEnabled(self.sorting)
@@ -119,7 +119,7 @@ class MarketMonitor(BasicMonitor):
         """将数据更新到表格中"""
         j = 0
         for show in data:
-            if(data[show]["valid"] == True):
+            if(data[show]["valid"] == True and data[show]["amount"]>-0.2):
                 self.setItem(j, 0, QTableWidgetItem(data[show]['name']))
                 self.setItem(j, 1, QTableWidgetItem(str(data[show]['now'])))
                 res = format(data[show]['amount'],".2%")
@@ -159,7 +159,7 @@ class CustomMonitor(BasicMonitor):
         self.setEditTriggers(self.NoEditTriggers)
 
         # 设为行交替颜色
-        self.setAlternatingRowColors(True)
+        # self.setAlternatingRowColors(True)
 
         # 设置允许排序
         self.setSortingEnabled(self.sorting)
@@ -220,7 +220,7 @@ class PlanAMonitor(BasicMonitor):
         self.setEditTriggers(self.NoEditTriggers)
 
         # 设为行交替颜色
-        self.setAlternatingRowColors(True)
+        # self.setAlternatingRowColors(True)
 
         # 设置允许排序
         self.setSortingEnabled(self.sorting)
@@ -240,7 +240,7 @@ class PlanAMonitor(BasicMonitor):
     def updateData(self, data):
         j = 0
         for show in data:
-            if (data[show]["planA"] == True):
+            if (data[show]["planA"] == True ):
                 self.setItem(j, 0, QTableWidgetItem(data[show]['name']))
                 self.setItem(j, 1, QTableWidgetItem(str(data[show]['now'])))
                 res = format(data[show]['amount'], ".2%")

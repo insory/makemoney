@@ -4,6 +4,7 @@ from .eventEngine import *
 import easyquotation
 from .vtEvent import *
 from collections import OrderedDict
+from moniterEngine.saveData import *
 import re
 class MarketDataThread(QThread):
     def __init__(self, eventEngine):
@@ -54,7 +55,9 @@ class MarketDataThread(QThread):
     def onTick(self, tick):
         """市场行情推送"""
         print(len(tick))
-        PlanAList = ["002181", "002888", "603516"]
+        custList1 = storeRecord("cust1")
+        list = custList1.dataLoad()
+        PlanAList = list[0]
         PlanCustList = ["300251", "600222", "300333"]
         for code in tick:
             open = self.dict_get(tick[code], 'close')
