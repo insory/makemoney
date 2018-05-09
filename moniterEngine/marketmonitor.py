@@ -1,11 +1,15 @@
 
 from  qtpy import QtWidgets,QtCore
+from PyQt5 import QtGui
 from  PyQt5.QtWidgets import QTableWidgetItem
 from .vtEvent import *
 from collections import OrderedDict
 from .eventEngine import  *
 from PyQt5.Qt import *
-class BasicMonitor(QtWidgets.QTableWidget):
+from  moniterEngine.searchcode import *
+from moniterEngine.saveData import *
+
+class BasicMonitor(QTableWidget):
     """
     基础监控
 
@@ -39,12 +43,47 @@ class BasicMonitor(QtWidgets.QTableWidget):
 
         # 字体
         self.font = None
+        self.mouseStatus = False
 
         # 保存数据对象到单元格
         self.saveData = False
 
         # 默认不允许根据表头进行排序，需要的组件可以开启
         self.sorting = False
+
+        self.daylinewidget = None
+        self.search = searchcode()
+        self.stockItemText = None
+
+        # 设置悬停显示
+        self.setMouseTracking(True)
+        self.itemEntered.connect(self.handleItemClicked)
+
+    def mousePressEvent(self, e: QtGui.QMouseEvent):
+        print("press")
+        code = self.search.findbychinese(self.stockItemText)
+        if(len(code) == 0):
+            return
+        print(code[0])
+        self.mouseStatus = True
+        if (e.button() == Qt.LeftButton):
+            self.daylineshow(code[0], "left")
+        elif (e.button() == Qt.RightButton):
+            self.daylineshow(code[0], "right")
+        elif(e.button() == Qt.MidButton):
+            self.mouseStatus = False
+
+
+    def mouseReleaseEvent(self, e: QtGui.QMouseEvent):
+        print("release")
+        self.daylinehide()
+        self.mouseStatus = False
+
+    def handleItemClicked(self, item):
+        self.stockItemText = item.text()
+        print(item.text())
+
+
     # ----------------------------------------------------------------------
     def setEventType(self, eventType):
             """设置监控的事件类型"""
@@ -61,6 +100,63 @@ class BasicMonitor(QtWidgets.QTableWidget):
             data = event.dict_['data']
             self.updateData(data)
 
+    def daylineinit(self):
+        url = 'http://image.sinajs.cn/newchart/min/n/sh000001.gif'
+        req = requests.get(url)
+
+        photo = QPixmap()
+        photo.loadFromData(req.content)
+
+        label = QLabel()
+        label.setPixmap(photo)
+
+        widget = QWidget()
+        layout = QVBoxLayout()
+        widget.setLayout(layout)
+        layout.addWidget(label)
+
+        return widget
+
+
+
+    def daylineshow(self,code,str):
+        if(code[0] == '6'):
+            if(str == "left"):
+                url = 'http://image.sinajs.cn/newchart/min/n/sh'+code+'.gif'
+            elif(str == "right"):
+                url = 'http://image.sinajs.cn/newchart/daily/n/sh' + code + '.gif'
+        else:
+            if (str == "left"):
+                url = 'http://image.sinajs.cn/newchart/min/n/sz' + code + '.gif'
+            elif (str == "right"):
+                url = 'http://image.sinajs.cn/newchart/daily/n/sz' + code + '.gif'
+        # url = url.match("sh000001","300279")
+        print(url)
+        req = requests.get(url)
+
+        photo = QPixmap()
+        photo.loadFromData(req.content)
+        label = QLabel()
+
+        label.setPixmap(photo)
+        label.setWindowOpacity(0.2)
+
+        self.daylinewidget = QWidget()
+
+        self.daylinewidget.setAutoFillBackground(True)
+        palette = QPalette()
+        palette.setColor(QPalette.Background,QColor(128, 128, 128, 50))
+        self.daylinewidget.setPalette(palette)
+        self.daylinewidget.resize( 50 , 50 );
+        label.setPalette(palette)
+        layout = QVBoxLayout()
+        self.daylinewidget.setLayout(layout)
+        layout.addWidget(label)
+        self.daylinewidget.show()
+
+    def daylinehide(self):
+        if(self.mouseStatus == True):
+            self.daylinewidget.hide()
 
 class MarketMonitor(BasicMonitor):
     """市场监控组件"""
@@ -76,6 +172,8 @@ class MarketMonitor(BasicMonitor):
         self.registerEvent()
 
         self.initTable()
+
+
 
 
     def initTable(self):
@@ -204,6 +302,11 @@ class PlanAMonitor(BasicMonitor):
 
         self.initTable()
 
+        self.itemDoubleClicked.connect(self.delstock)
+
+        self.search = searchcode()
+        self.custList1 = storeRecord("cust1")
+
     def initTable(self):
         """初始化表格"""
         # 设置表格的列数
@@ -237,8 +340,21 @@ class PlanAMonitor(BasicMonitor):
             headItem.setForeground(QBrush(Qt.gray))
             headItem.setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
 
+    def mousePressEvent(self, e: QtGui.QMouseEvent):
+        super().mousePressEvent(e)
+        if(e.button() == Qt.MidButton):
+            self.delstock(self.stockItemText)
+
+    def delstock(self,str):
+        print(str)
+        code = self.search.findbychinese(str)
+        print(code[0])
+        self.custList1.dataDel(code[0])
+        self.removeRow(self.currentRow())
+
     def updateData(self, data):
         j = 0
+        self.clear()
         for show in data:
             if (data[show]["planA"] == True ):
                 self.setItem(j, 0, QTableWidgetItem(data[show]['name']))

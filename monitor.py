@@ -2,6 +2,8 @@
 import sys
 import easyquotation
 from PyQt5.QtGui import *
+from skimage import io
+
 
 from moniterEngine.marketmonitor import *
 from moniterEngine.stocksearch import *
@@ -23,8 +25,7 @@ class MyQQ(QTabWidget):
         groupbox1.setPalette(palette1)
         vlayout1 = QVBoxLayout(groupbox1)
         vlayout1.setAlignment(Qt.AlignCenter)
-        mainMonitor = QLabel("s：-0.88% c：1.22%")
-        vlayout1.addWidget(mainMonitor)
+
         vlayout1.addWidget(tab1)
 
         tab2 = CustomMonitor(eventEngine)
@@ -49,46 +50,44 @@ class MyQQ(QTabWidget):
         toolbox1.setPalette(palette1)
         toolbox1.setAutoFillBackground(True)
 
-        toolbox1.addItem(groupbox1, self.tr("我的自选"))
-        toolbox1.addItem(groupbox2, self.tr("近期强势股"))
-        toolbox1.addItem(groupbox3, self.tr("我的交易计划"))
+        toolbox1.addItem(groupbox1, self.tr("list 1"))
+        toolbox1.addItem(groupbox2, self.tr("list A"))
+        toolbox1.addItem(groupbox3, self.tr("list B"))
 
-
+        # search=stocksearch()
+        testbutton = QPushButton()
         toolbox2 = QToolBox()
+        toolbox2.addItem(testbutton,"get")
+        # toolbox2.addItem(search,"111")
         toolbox2.setPalette(palette1)
         toolbox2.setAutoFillBackground(True)
-
+        testbutton.clicked.connect(lambda:self.buttonTest())
 
         self.addTab(toolbox1, "主面板")
         self.addTab(toolbox2, "监控")
         self.setAutoFillBackground(True)
 
-        # toolbox1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(80, 80, 80);border-radius: 10px")
-        # toolbox2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
-        #
-        # tab1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
-        # tab2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+        toolbox1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(80, 80, 80);border-radius: 10px")
+        toolbox2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+
+        tab1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+        tab2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
+
+        self.setGeometry(0, 0, 200, 500)
+        # self.setGeometry(300, 300, 200, 500)
 
 
-
-        self.setGeometry(300, 300, 200, 500)
-
-        # custList1 = storeRecord("cust1")
-        # ls = ["000001"]
-        # custList1.dataSave(ls)
-        # ls.append("600222")
-        # custList1.dataSave(ls)
-        # ls.append("300222")
-        # custList1.dataSave(ls)
-
-        # list=custList1.dataLoad()
-
-        print(list)
+    def buttonTest(self):
+        image = io.imread("http://image.sinajs.cn/newchart/daily/n/sh601006.gif")
+        io.imshow(image)
+        io.show()
 
     def buttonClicked(self,toolbox1):
         groupboxNew = QGroupBox()
         toolboxNew = QToolBox()
         toolbox1.addItem(groupboxNew,self.tr("new group"))
+
+
     def enterEvent(self, evt):
         self.activateWindow()
         if(self.x() == self.frame-self.width()):
@@ -105,7 +104,6 @@ class MyQQ(QTabWidget):
         elif(self.y() < 0 and QCursor.pos().y()>0):
             self.move(self.x(), self.frame-self.height()+self.y()-self.geometry().y())
 
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.show()
 
 # 直接运行脚本可以进行测试
@@ -113,14 +111,21 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     easyquotation.update_stock_codes();
     ee = EventEngine()
+    monitor = QWidget()
     myqq = MyQQ(ee)
-    myqq.setWindowFlags(myqq.windowFlags()& (~Qt.WindowMinMaxButtonsHint|Qt.FramelessWindowHint))
-    myqq.setWindowTitle("自动量化交易")
+    # myqq.setWindowFlags(myqq.windowFlags()& ~Qt.WindowMinMaxButtonsHint)
+    # myqq.setWindowTitle("monitor")
 
+    vboxLayout = QVBoxLayout()
+    vboxLayout.setAlignment(Qt.AlignCenter)
+    mainMonitor = QLabel("s：-0.88% c：1.22%")
+    vboxLayout.addWidget(mainMonitor)
+    vboxLayout.addWidget(myqq)
+    monitor.setLayout(vboxLayout)
     ss = MarketMonitor(ee)
     kk = MarketDataThread(ee)
     kk.start(True)
     ee.start(True)
     sleep(1)
-    myqq.show()
+    monitor.show()
     app.exec_()

@@ -82,14 +82,14 @@ class EventEngine(object):
         """处理事件"""
         # 检查是否存在对该事件进行监听的处理函数
         if event.type_ in self.__handlers:
-            print("recv event")
+            # print("recv event")
             # 若存在，则按顺序将事件传递给处理函数执行
             [handler(event) for handler in self.__handlers[event.type_]]
 
             # 以上语句为Python列表解析方式的写法，对应的常规循环写法为：
             # for handler in self.__handlers[event.type_]:
             # handler(event)
-        print(event.type_)
+        # print(event.type_)
         # 调用通用处理函数进行处理
         if self.__generalHandlers:
             [handler(event) for handler in self.__generalHandlers]
@@ -118,7 +118,7 @@ class EventEngine(object):
 
         # 启动计时器，计时器事件间隔默认设定为1秒
         if timer:
-            self.__timer.start(1000)
+            self.__timer.start(5000)
 
     def stop(self):
         """停止引擎"""
