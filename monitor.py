@@ -73,7 +73,7 @@ class MyQQ(QTabWidget):
         tab1.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
         tab2.setStyleSheet("background:rgb(60,60,60);border:0px solid rgb(0, 225, 230)")
 
-        self.setGeometry(0, 0, 200, 500)
+        self.setGeometry(300, 300, 200, 500)
         # self.setGeometry(300, 300, 200, 500)
 
 
@@ -111,21 +111,15 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     easyquotation.update_stock_codes();
     ee = EventEngine()
-    monitor = QWidget()
     myqq = MyQQ(ee)
     # myqq.setWindowFlags(myqq.windowFlags()& ~Qt.WindowMinMaxButtonsHint)
     # myqq.setWindowTitle("monitor")
 
-    vboxLayout = QVBoxLayout()
-    vboxLayout.setAlignment(Qt.AlignCenter)
-    mainMonitor = QLabel("s：-0.88% c：1.22%")
-    vboxLayout.addWidget(mainMonitor)
-    vboxLayout.addWidget(myqq)
-    monitor.setLayout(vboxLayout)
+
     ss = MarketMonitor(ee)
     kk = MarketDataThread(ee)
     kk.start(True)
     ee.start(True)
     sleep(1)
-    monitor.show()
+    myqq.show()
     app.exec_()
