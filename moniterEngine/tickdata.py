@@ -39,6 +39,14 @@ class MarketDataThread(QThread):
         tick = self.quotation.market_snapshot(prefix=True)
         self.onTick(tick)
 
+
+    def getMarketInfo(self,rise,fall,yesterday,boom):
+        info = self.quotation.stocks(['sh000001','sz399006'], prefix=True)
+        print(info)
+        event1 = Event(type_=EVENT_TICK)
+        event1.dict_['data'] = list
+        self.eventEngine.put(event1)
+
     def dict_get(self,dictionary, cmd, default=None):
         cmd_list = cmd.split('.')
         tmp = dict(dictionary)
@@ -63,11 +71,12 @@ class MarketDataThread(QThread):
         PlanAList = list[0]
         PlanCustList = ["300251", "600222", "300333"]
         self.ztDataCount =0
+        self.ztBoomDataCount =0
         self.dtDataCount =0
         for code in tick:
             close = self.dict_get(tick[code], 'close')
             now = self.dict_get(tick[code], 'now')
-
+            high = self.dict_get(tick[code], 'high')
             if close != 0:
                 zf = (now - close) / close
             else:
@@ -76,6 +85,14 @@ class MarketDataThread(QThread):
             ret = self.ztCount(close, now)
             if (ret == True and zf>0.06):
                 self.ztDataCount += 1
+            ret = self.ztBoomCount(close, high, now)
+
+            if(close != 0):
+                notSt = (high-close)/close
+
+                if (ret == True and notSt > 0.06 and self.stockFilter(code)):
+                    self.ztBoomDataCount += 1
+
             ret = self.dtCount(close, now)
             if(ret == True and zf<-0.04):
                 self.dtDataCount += 1
@@ -96,8 +113,13 @@ class MarketDataThread(QThread):
             else:
                 tick[code]["planCust"] = True
         print("zhangting:")
-        print(self.ztDataCount)
-        print(self.dtDataCount)
+        # print("涨停家数："%(self.ztDataCount))
+        print("涨停家数： %d" % (self.ztDataCount))
+        print("跌停家数： %d" % (self.dtDataCount))
+        print("炸板家数： %d" % (self.ztBoomDataCount))
+        res = format(self.ztDataCount/(self.ztDataCount+self.ztBoomDataCount), ".2%")
+        print("炸板率： %s" % (res))
+        # self.getMarketInfo()
         list = OrderedDict(sorted(tick.items(), key=lambda i: i[1]['amount'], reverse=1))
         # 通用事件
         event1 = Event(type_=EVENT_TICK)
@@ -117,6 +139,13 @@ class MarketDataThread(QThread):
 
     def isContainOfList(self,str,list=[]):
         if str in list:
+            return True
+        else:
+            return False
+
+    def ztBoomCount(self,close,high,now):
+        zt = round(close*1.1,2)
+        if(zt == high and now < high):
             return True
         else:
             return False

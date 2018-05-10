@@ -152,6 +152,7 @@ class BasicMonitor(QTableWidget):
         layout = QVBoxLayout()
         self.daylinewidget.setLayout(layout)
         layout.addWidget(label)
+        self.daylinewidget.setGeometry(500,300,50,50)
         self.daylinewidget.show()
 
     def daylinehide(self):
