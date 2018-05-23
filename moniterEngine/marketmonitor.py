@@ -224,6 +224,7 @@ class MarketMonitor(BasicMonitor):
                 res = format(data[show]['amount'],".2%")
                 self.setItem(j, 2, QTableWidgetItem(str(res)))
                 self.setItem(j, 3, QTableWidgetItem(show))
+                self.setItem(j, 4, QTableWidgetItem(str(j)))
                 j=j+1
 
 class CustomMonitor(BasicMonitor):
@@ -356,6 +357,8 @@ class PlanAMonitor(BasicMonitor):
     def updateData(self, data):
         j = 0
         self.clear()
+        labels = ["公司", "价格", "涨幅", "代码", "自定义"]
+        self.setHorizontalHeaderLabels(labels)
         for show in data:
             if (data[show]["planA"] == True ):
                 self.setItem(j, 0, QTableWidgetItem(data[show]['name']))
@@ -363,4 +366,5 @@ class PlanAMonitor(BasicMonitor):
                 res = format(data[show]['amount'], ".2%")
                 self.setItem(j, 2, QTableWidgetItem(str(res)))
                 self.setItem(j, 3, QTableWidgetItem(show))
+                self.setItem(j, 4, QTableWidgetItem(str(j)))
                 j = j + 1

@@ -6,6 +6,8 @@ from .vtEvent import *
 from collections import OrderedDict
 from moniterEngine.saveData import *
 import re
+import time
+
 class MarketDataThread(QThread):
     def __init__(self, eventEngine):
         super(MarketDataThread, self).__init__()
@@ -15,6 +17,7 @@ class MarketDataThread(QThread):
         # 事件引擎开关
         self.__active = True
         self.ztDataCount =0
+        self.marketInfo = {'mainboard':'0','secondboard':'0','limitupRatio':'0%','rise':'0','fall':'0','--':'0','limitup':'0','limitdown':'0','boom':'0'}
 
         self.quotation = easyquotation.use('sina')
 
@@ -36,15 +39,21 @@ class MarketDataThread(QThread):
 
 
     def processQuote(self):
+        print(time.time())
         tick = self.quotation.market_snapshot(prefix=True)
         self.onTick(tick)
 
 
-    def getMarketInfo(self,rise,fall,yesterday,boom):
+    def getMarketInfo(self):
         info = self.quotation.stocks(['sh000001','sz399006'], prefix=True)
-        print(info)
-        event1 = Event(type_=EVENT_TICK)
-        event1.dict_['data'] = list
+        res = format((info['sh000001']['now']-info['sh000001']['close']) / info['sh000001']['close'], ".2%")
+        # print("上证：%s"%(res))
+        self.marketInfo["mainboard"] = res
+        res = format((info['sz399006']['now']-info['sz399006']['close']) / info['sz399006']['close'], ".2%")
+        # print("创业板：%s"%(res))
+        self.marketInfo["secondboard"] = res
+        event1 = Event(type_=EVENT_MARKETINFO)
+        event1.dict_['data'] = self.marketInfo
         self.eventEngine.put(event1)
 
     def dict_get(self,dictionary, cmd, default=None):
@@ -63,7 +72,7 @@ class MarketDataThread(QThread):
 
     def onTick(self, tick):
         """市场行情推送"""
-        print(len(tick))
+        # print(len(tick))
         custList1 = storeRecord("cust1")
         list = custList1.dataLoad()
         if(list == None):
@@ -73,6 +82,9 @@ class MarketDataThread(QThread):
         self.ztDataCount =0
         self.ztBoomDataCount =0
         self.dtDataCount =0
+        self.fallDataCount = 0
+        self.riseDataCount = 0
+        self.pDataCount = 0
         for code in tick:
             close = self.dict_get(tick[code], 'close')
             now = self.dict_get(tick[code], 'now')
@@ -81,6 +93,13 @@ class MarketDataThread(QThread):
                 zf = (now - close) / close
             else:
                 zf = 0
+
+            if(zf > 0 and self.stockFilter(code)):
+                self.riseDataCount +=1
+            elif(zf <0 and self.stockFilter(code)):
+                self.fallDataCount +=1
+            elif(zf ==0 and self.stockFilter(code)):
+                self.pDataCount +=1
             tick[code]['amount'] = zf
             ret = self.ztCount(close, now)
             if (ret == True and zf>0.06):
@@ -112,14 +131,29 @@ class MarketDataThread(QThread):
                 tick[code]["planCust"] = False
             else:
                 tick[code]["planCust"] = True
-        print("zhangting:")
-        # print("涨停家数："%(self.ztDataCount))
-        print("涨停家数： %d" % (self.ztDataCount))
-        print("跌停家数： %d" % (self.dtDataCount))
-        print("炸板家数： %d" % (self.ztBoomDataCount))
+
+
+        # print("zhangting:")
+        # # print("涨停家数："%(self.ztDataCount))
+        # print("涨停家数： %d" % (self.ztDataCount))
+        # print("跌停家数： %d" % (self.dtDataCount))
+        # print("炸板家数： %d" % (self.ztBoomDataCount))
+        # print("上涨家数：%d  下跌家数：%d 平盘家数：%d"%(self.riseDataCount,self.fallDataCount,self.pDataCount))
+
         res = format(self.ztDataCount/(self.ztDataCount+self.ztBoomDataCount), ".2%")
-        print("炸板率： %s" % (res))
-        # self.getMarketInfo()
+        # print("封板率： %s" % (res))
+        # {'mainboard': '0', 'secondboard': '0', 'limitupRatio': '0%', 'rise': '0', 'fall': '0', '--': '0',
+        #  'limitup': '0', 'limitdown': '0', 'boom': '0'}
+
+        self.marketInfo['limitup'] = str(self.ztDataCount)
+        self.marketInfo['limitdown'] = str(self.dtDataCount)
+        self.marketInfo['boom'] = str(self.ztBoomDataCount)
+        self.marketInfo['rise'] = str(self.riseDataCount)
+        self.marketInfo['fall'] = str(self.fallDataCount)
+        self.marketInfo['--'] = str(self.pDataCount)
+        self.marketInfo['limitupRatio'] = res
+
+        self.getMarketInfo()
         list = OrderedDict(sorted(tick.items(), key=lambda i: i[1]['amount'], reverse=1))
         # 通用事件
         event1 = Event(type_=EVENT_TICK)
